@@ -28,23 +28,12 @@ export class KeyController {
       terminal: true,
       input: process.stdin,
       output,
+      prompt: '',
     });
     this.inputOff();
 
-    process.stdin.on('keypress', async (str: string, key: KeyPressObject) => {
-      if (key.sequence === '\u0003') {
-        if (this._onPressQuitKey) {
-          this._onPressQuitKey();
-        }
-      }
-
-      if (!this.targetPage) {
-        return;
-      }
-      this.targetPage.keyPress(str, key);
-    });
-    readline.emitKeypressEvents(process.stdin);
-    process.stdin.setRawMode(true);
+    this.handleInput();
+    this.handleKeyPress();
   }
 
   get readline(): readline.ReadLine {
@@ -65,5 +54,30 @@ export class KeyController {
 
   onPressQuitKey(f: () => void) {
     this._onPressQuitKey = f;
+  }
+
+  private handleInput() {
+    this._readline.on('line', value => {
+      if (!this.targetPage) {
+        return;
+      }
+      this.targetPage.onInput(value);
+    });
+  }
+
+  private handleKeyPress() {
+    process.stdin.on('keypress', async (value: string, key: KeyPressObject) => {
+      if (key.sequence === '\u0003') {
+        if (this._onPressQuitKey) {
+          this._onPressQuitKey();
+        }
+      }
+      if (!this.targetPage) {
+        return;
+      }
+      this.targetPage.onKeyPress(value, key);
+    });
+    readline.emitKeypressEvents(process.stdin);
+    process.stdin.setRawMode(true);
   }
 }

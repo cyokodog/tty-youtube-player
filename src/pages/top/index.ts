@@ -1,30 +1,36 @@
-import { BasePage } from '../../models/base/page';
-import { Router } from '../../router';
-import { KeyPressObject, KeyController } from '../../lib/key-controller';
-
-interface TopPageParams {
-  router: Router;
-  keyController: KeyController;
-}
+import { BasePage, BasePageParams } from '../../models/base/page';
+import { action } from '../../store/action';
+import { searchVideo } from '../../models/video/search-video';
+import { fetchSearchedVideos } from '../../models/video/fetch-searched-videos';
+import { KeyPressObject } from '../../lib/key-controller';
+import { HeaderUi } from '../../component/header';
 
 export class TopPage extends BasePage {
-  static create(params: TopPageParams): TopPage {
-    return new TopPage(params);
-  }
-
-  constructor(params: TopPageParams) {
-    const { router, keyController } = params;
-    super({ router, keyController });
+  constructor(params: BasePageParams) {
+    super(params);
   }
 
   render() {
-    this.write('Input search word');
+    this.inputOff();
+    this.baseColors(117, 'black');
+    this.clear();
+    HeaderUi.get(this).render();
+    this.println('Please enter search word.', 241);
     this.inputOn();
   }
-
-  keyPress(_: any, key: KeyPressObject) {
-    if (key.name === 'up') {
-      this.router.toPlayerPage();
+  async onKeyPress(_, key: KeyPressObject) {
+    if (key.name === 'right' && key.shift) {
+      this.router.toSearchedPage();
     }
+  }
+
+  async onInput(searchWord: string) {
+    if (!searchWord) {
+      return;
+    }
+    await searchVideo(this.page, searchWord);
+    const videos = await fetchSearchedVideos(this.page);
+    action.changeSearchedVideos(videos);
+    this.router.toSearchedPage();
   }
 }

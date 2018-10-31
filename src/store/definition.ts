@@ -1,4 +1,5 @@
 export enum Page {
   Top,
-  Player,
+  Searched,
+  Download,
 }
